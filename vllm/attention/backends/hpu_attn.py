@@ -172,6 +172,7 @@ class HPUAttentionImpl(AttentionImpl, torch.nn.Module):
             raise NotImplementedError("Encoder self-attention "
                                       "is not implemented for "
                                       "HPUAttentionImpl")
+        self.query_position_bias_func = None
 
     def forward(
         self,
@@ -242,8 +243,8 @@ class HPUAttentionImpl(AttentionImpl, torch.nn.Module):
                     assert attn_metadata.attn_bias is not None, \
                             'attn_bias must be set before calling model.forward'
                     attn_bias = attn_metadata.attn_bias
-                    if self.position_bias is not None:
-                        attn_bias = attn_bias + self.position_bias
+                    if self.query_position_bias_func is not None:
+                        attn_bias = attn_bias + self.query_position_bias_func(query, query_shape)
                     elif self.alibi_slopes is not None:
                         position_bias = _make_alibi_bias(
                             self.alibi_slopes, self.num_kv_heads,
